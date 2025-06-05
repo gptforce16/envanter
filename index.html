@@ -1,119 +1,598 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Envanter Takip</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f4f4f4;
-    }
-
-    h1 {
-      color: #b30000;
-    }
-
-    .buttons {
-      margin-bottom: 20px;
-    }
-
-    .buttons button {
-      margin-right: 10px;
-      padding: 10px 15px;
-      background-color: #007bff;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .section {
-      background-color: white;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-
-    .section h2 {
-      margin-top: 0;
-    }
-
-    .product {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
-    }
-
-    .product button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 600px) {
-      .product {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .product button {
-        margin-top: 5px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envanter Yönetim Sistemi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
+    <h1>ENVANTER YÖNETİM SİSTEMİ</h1>
 
-  <h1>ENVANTER TAKİP</h1>
+    <div class="section">
+        <button id="stokEkleBtn">Stok Ekle / Düzenle</button>
+        <button id="lokasyonEkleBtn" style="margin-left: 20px;">Lokasyon Ekle / Düzenle</button>
+    </div>
 
-  <div class="buttons">
-    <button onclick="stokEkle()">Stok Ekle / Düzenle</button>
-    <button onclick="lokasyonEkle()">Lokasyon Ekle / Düzenle</button>
-  </div>
+    <div id="inventoryContainer">
+        <!-- Dinamik olarak envanter bilgisi buraya eklenecek -->
+    </div>
 
-  <div class="section">
-    <h2>Atanmamış</h2>
-    <div class="product"><span>Ürün1</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün2</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün3</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün4</span><button>Gönder</button></div>
-  </div>
+    <!-- Stok Ekle/Düzenle Modal -->
+    <div id="stokModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Stok Ekle / Düzenle</h2>
+            <div>
+                <label>Ürün Adı:</label>
+                <input type="text" id="urunAdi">
+            </div>
+            <div>
+                <label>Miktar:</label>
+                <input type="number" id="urunMiktar">
+            </div>
+            <div>
+                <label>Birim:</label>
+                <input type="text" id="urunBirim">
+            </div>
+            <div id="mevcutUrunlerDiv" style="display:none;">
+                <label>Mevcut Ürünler:</label>
+                <select id="mevcutUrunler"></select>
+            </div>
+            <button id="urunKaydet">Kaydet</button>
+            <button id="urunSil" style="display:none;">Sil</button>
+            <button id="yeniUrunEkle">Yeni Ürün Ekle</button>
+        </div>
+    </div>
 
-  <div class="section">
-    <h2>Lokasyon 1</h2>
-    <div class="product"><span>Ürün5</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün6</span><button>Gönder</button></div>
-  </div>
+    <!-- Lokasyon Ekle/Düzenle Modal -->
+    <div id="lokasyonModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Lokasyon Ekle / Düzenle</h2>
+            <div>
+                <label>Lokasyon Adı:</label>
+                <input type="text" id="lokasyonAdi">
+            </div>
+            <div>
+                <label>İletişim Bilgisi (isteğe bağlı):</label>
+                <input type="text" id="lokasyonIletisim">
+            </div>
+            <div id="mevcutLokasyonlarDiv" style="display:none;">
+                <label>Mevcut Lokasyonlar:</label>
+                <select id="mevcutLokasyonlar"></select>
+            </div>
+            <button id="lokasyonKaydet">Kaydet</button>
+            <button id="lokasyonSil" style="display:none;">Sil</button>
+            <button id="yeniLokasyonEkle">Yeni Lokasyon Ekle</button>
+        </div>
+    </div>
 
-  <div class="section">
-    <h2>Lokasyon 2</h2>
-    <div class="product"><span>Ürün7</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün8</span><button>Gönder</button></div>
-  </div>
+    <!-- Gönder Modal -->
+    <div id="gonderModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Ürün Gönder</h2>
+            <input type="hidden" id="gonderilecekUrunId">
+            <div>
+                <label>Hedef Lokasyon:</label>
+                <select id="hedefLokasyonlar"></select>
+            </div>
+            <button id="urunGonder">Gönder</button>
+        </div>
+    </div>
 
-  <div class="section">
-    <h2>Lokasyon 3</h2>
-    <div class="product"><span>Ürün9</span><button>Gönder</button></div>
-    <div class="product"><span>Ürün10</span><button>Gönder</button></div>
-  </div>
+    <script>
+        // Başlangıç verileri
+        let inventory = {
+            locations: [
+                {
+                    id: 0,
+                    name: "Atanmamış",
+                    contact: null,
+                    products: [
+                        {id: 1, name: "Ürün1", quantity: 10, unit: "adet"},
+                        {id: 2, name: "Ürün2", quantity: 5, unit: "adet"},
+                        {id: 3, name: "Ürün3", quantity: 8, unit: "adet"},
+                        {id: 4, name: "Ürün4", quantity: 3, unit: "adet"}
+                    ]
+                },
+                {
+                    id: 1,
+                    name: "Lokasyon 1",
+                    contact: "Depo 1",
+                    products: [
+                        {id: 5, name: "Ürün5", quantity: 7, unit: "adet"},
+                        {id: 6, name: "Ürün6", quantity: 2, unit: "adet"}
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "Lokasyon 2",
+                    contact: "Depo 2",
+                    products: [
+                        {id: 7, name: "Ürün7", quantity: 4, unit: "adet"},
+                        {id: 8, name: "Ürün8", quantity: 6, unit: "adet"}
+                    ]
+                },
+                {
+                    id: 3,
+                    name: "Lokasyon 3",
+                    contact: "Mağaza",
+                    products: [
+                        {id: 9, name: "Ürün9", quantity: 9, unit: "adet"},
+                        {id: 10, name: "Ürün10", quantity: 1, unit: "adet"}
+                    ]
+                }
+            ],
+            nextProductId: 11,
+            nextLocationId: 4
+        };
 
-  <script>
-    function stokEkle() {
-      alert("Stok Ekle / Düzenle fonksiyonu buraya gelecek.");
-    }
+        // DOM elementleri
+        const inventoryContainer = document.getElementById('inventoryContainer');
+        const stokModal = document.getElementById('stokModal');
+        const lokasyonModal = document.getElementById('lokasyonModal');
+        const gonderModal = document.getElementById('gonderModal');
+        const stokEkleBtn = document.getElementById('stokEkleBtn');
+        const lokasyonEkleBtn = document.getElementById('lokasyonEkleBtn');
+        const closeButtons = document.querySelectorAll('.close');
 
-    function lokasyonEkle() {
-      alert("Lokasyon Ekle / Düzenle fonksiyonu buraya gelecek.");
-    }
-  </script>
+        // Sayfa yüklendiğinde envanteri göster
+        document.addEventListener('DOMContentLoaded', renderInventory);
 
+        // Modal açma/kapatma işlemleri
+        stokEkleBtn.addEventListener('click', () => {
+            showStokModal('add');
+        });
+
+        lokasyonEkleBtn.addEventListener('click', () => {
+            showLokasyonModal('add');
+        });
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                stokModal.style.display = 'none';
+                lokasyonModal.style.display = 'none';
+                gonderModal.style.display = 'none';
+            });
+        });
+
+        // Envanteri ekranda göster
+        function renderInventory() {
+            inventoryContainer.innerHTML = '';
+            
+            inventory.locations.forEach(location => {
+                const section = document.createElement('div');
+                section.className = 'section';
+                
+                const title = document.createElement('div');
+                title.className = 'section-title';
+                title.textContent = location.name;
+                section.appendChild(title);
+                
+                const table = document.createElement('table');
+                
+                location.products.forEach(product => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = `${product.name} (${product.quantity} ${product.unit})`;
+                    row.appendChild(nameCell);
+                    
+                    const actionCell = document.createElement('td');
+                    const sendButton = document.createElement('button');
+                    sendButton.textContent = 'Gönder';
+                    sendButton.addEventListener('click', () => showGonderModal(product.id, location.id));
+                    actionCell.appendChild(sendButton);
+                    row.appendChild(actionCell);
+                    
+                    table.appendChild(row);
+                });
+                
+                section.appendChild(table);
+                inventoryContainer.appendChild(section);
+            });
+        }
+
+        // Stok modalını göster
+        function showStokModal(mode, productId = null) {
+            const mevcutUrunlerDiv = document.getElementById('mevcutUrunlerDiv');
+            const urunSilBtn = document.getElementById('urunSil');
+            const yeniUrunEkleBtn = document.getElementById('yeniUrunEkle');
+            
+            if (mode === 'edit') {
+                mevcutUrunlerDiv.style.display = 'block';
+                urunSilBtn.style.display = 'inline-block';
+                yeniUrunEkleBtn.style.display = 'inline-block';
+                
+                // Mevcut ürünleri dropdown'a doldur
+                const mevcutUrunler = document.getElementById('mevcutUrunler');
+                mevcutUrunler.innerHTML = '';
+                
+                let allProducts = [];
+                inventory.locations.forEach(loc => {
+                    loc.products.forEach(prod => {
+                        allProducts.push(prod);
+                    });
+                });
+                
+                allProducts.forEach(prod => {
+                    const option = document.createElement('option');
+                    option.value = prod.id;
+                    option.textContent = `${prod.name} (${prod.quantity} ${prod.unit})`;
+                    mevcutUrunler.appendChild(option);
+                });
+                
+                // Seçili ürünü doldur
+                if (productId) {
+                    const product = findProductById(productId);
+                    if (product) {
+                        mevcutUrunler.value = productId;
+                        document.getElementById('urunAdi').value = product.name;
+                        document.getElementById('urunMiktar').value = product.quantity;
+                        document.getElementById('urunBirim').value = product.unit;
+                    }
+                }
+                
+                // Ürün seçildiğinde formu doldur
+                mevcutUrunler.addEventListener('change', function() {
+                    const selectedId = parseInt(this.value);
+                    const product = findProductById(selectedId);
+                    if (product) {
+                        document.getElementById('urunAdi').value = product.name;
+                        document.getElementById('urunMiktar').value = product.quantity;
+                        document.getElementById('urunBirim').value = product.unit;
+                    }
+                });
+            } else {
+                mevcutUrunlerDiv.style.display = 'none';
+                urunSilBtn.style.display = 'none';
+                yeniUrunEkleBtn.style.display = 'none';
+                
+                // Formu temizle
+                document.getElementById('urunAdi').value = '';
+                document.getElementById('urunMiktar').value = '';
+                document.getElementById('urunBirim').value = 'adet';
+            }
+            
+            stokModal.style.display = 'block';
+        }
+
+        // Lokasyon modalını göster
+        function showLokasyonModal(mode, locationId = null) {
+            const mevcutLokasyonlarDiv = document.getElementById('mevcutLokasyonlarDiv');
+            const lokasyonSilBtn = document.getElementById('lokasyonSil');
+            const yeniLokasyonEkleBtn = document.getElementById('yeniLokasyonEkle');
+            
+            if (mode === 'edit') {
+                mevcutLokasyonlarDiv.style.display = 'block';
+                lokasyonSilBtn.style.display = 'inline-block';
+                yeniLokasyonEkleBtn.style.display = 'inline-block';
+                
+                // Mevcut lokasyonları dropdown'a doldur
+                const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
+                mevcutLokasyonlar.innerHTML = '';
+                
+                inventory.locations.forEach(loc => {
+                    if (loc.id !== 0) { // Atanmamış lokasyonunu hariç tut
+                        const option = document.createElement('option');
+                        option.value = loc.id;
+                        option.textContent = loc.name;
+                        mevcutLokasyonlar.appendChild(option);
+                    }
+                });
+                
+                // Seçili lokasyonu doldur
+                if (locationId) {
+                    const location = findLocationById(locationId);
+                    if (location) {
+                        mevcutLokasyonlar.value = locationId;
+                        document.getElementById('lokasyonAdi').value = location.name;
+                        document.getElementById('lokasyonIletisim').value = location.contact || '';
+                    }
+                }
+                
+                // Lokasyon seçildiğinde formu doldur
+                mevcutLokasyonlar.addEventListener('change', function() {
+                    const selectedId = parseInt(this.value);
+                    const location = findLocationById(selectedId);
+                    if (location) {
+                        document.getElementById('lokasyonAdi').value = location.name;
+                        document.getElementById('lokasyonIletisim').value = location.contact || '';
+                    }
+                });
+            } else {
+                mevcutLokasyonlarDiv.style.display = 'none';
+                lokasyonSilBtn.style.display = 'none';
+                yeniLokasyonEkleBtn.style.display = 'none';
+                
+                // Formu temizle
+                document.getElementById('lokasyonAdi').value = '';
+                document.getElementById('lokasyonIletisim').value = '';
+            }
+            
+            lokasyonModal.style.display = 'block';
+        }
+
+        // Gönder modalını göster
+        function showGonderModal(productId, currentLocationId) {
+            document.getElementById('gonderilecekUrunId').value = productId;
+            
+            // Hedef lokasyonları dropdown'a doldur (mevcut lokasyon hariç)
+            const hedefLokasyonlar = document.getElementById('hedefLokasyonlar');
+            hedefLokasyonlar.innerHTML = '';
+            
+            inventory.locations.forEach(loc => {
+                if (loc.id !== currentLocationId) {
+                    const option = document.createElement('option');
+                    option.value = loc.id;
+                    option.textContent = loc.name;
+                    hedefLokasyonlar.appendChild(option);
+                }
+            });
+            
+            gonderModal.style.display = 'block';
+        }
+
+        // Ürün bulma yardımcı fonksiyonu
+        function findProductById(productId) {
+            for (const location of inventory.locations) {
+                for (const product of location.products) {
+                    if (product.id === productId) {
+                        return product;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Lokasyon bulma yardımcı fonksiyonu
+        function findLocationById(locationId) {
+            return inventory.locations.find(loc => loc.id === locationId);
+        }
+
+        // Ürün kaydetme işlemi
+        document.getElementById('urunKaydet').addEventListener('click', function() {
+            const urunAdi = document.getElementById('urunAdi').value;
+            const urunMiktar = parseInt(document.getElementById('urunMiktar').value);
+            const urunBirim = document.getElementById('urunBirim').value;
+            
+            if (!urunAdi || isNaN(urunMiktar) || !urunBirim) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+            
+            const mevcutUrunler = document.getElementById('mevcutUrunler');
+            if (mevcutUrunler.style.display === 'block') {
+                // Düzenleme modu
+                const productId = parseInt(mevcutUrunler.value);
+                const product = findProductById(productId);
+                if (product) {
+                    product.name = urunAdi;
+                    product.quantity = urunMiktar;
+                    product.unit = urunBirim;
+                }
+            } else {
+                // Yeni ekleme modu
+                const newProduct = {
+                    id: inventory.nextProductId++,
+                    name: urunAdi,
+                    quantity: urunMiktar,
+                    unit: urunBirim
+                };
+                
+                // Atanmamış bölümüne ekle
+                const unassignedLocation = inventory.locations.find(loc => loc.id === 0);
+                if (unassignedLocation) {
+                    unassignedLocation.products.push(newProduct);
+                }
+            }
+            
+            renderInventory();
+            stokModal.style.display = 'none';
+        });
+
+        // Ürün silme işlemi
+        document.getElementById('urunSil').addEventListener('click', function() {
+            const mevcutUrunler = document.getElementById('mevcutUrunler');
+            const productId = parseInt(mevcutUrunler.value);
+            
+            if (confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+                for (const location of inventory.locations) {
+                    const index = location.products.findIndex(p => p.id === productId);
+                    if (index !== -1) {
+                        location.products.splice(index, 1);
+                        break;
+                    }
+                }
+                
+                renderInventory();
+                stokModal.style.display = 'none';
+            }
+        });
+
+        // Yeni ürün ekleme butonu
+        document.getElementById('yeniUrunEkle').addEventListener('click', function() {
+            showStokModal('add');
+        });
+
+        // Lokasyon kaydetme işlemi
+        document.getElementById('lokasyonKaydet').addEventListener('click', function() {
+            const lokasyonAdi = document.getElementById('lokasyonAdi').value;
+            const lokasyonIletisim = document.getElementById('lokasyonIletisim').value;
+            
+            if (!lokasyonAdi) {
+                alert('Lokasyon adı zorunludur!');
+                return;
+            }
+            
+            const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
+            if (mevcutLokasyonlar.style.display === 'block') {
+                // Düzenleme modu
+                const locationId = parseInt(mevcutLokasyonlar.value);
+                const location = findLocationById(locationId);
+                if (location) {
+                    location.name = lokasyonAdi;
+                    location.contact = lokasyonIletisim || null;
+                }
+            } else {
+                // Yeni ekleme modu
+                const newLocation = {
+                    id: inventory.nextLocationId++,
+                    name: lokasyonAdi,
+                    contact: lokasyonIletisim || null,
+                    products: []
+                };
+                
+                inventory.locations.push(newLocation);
+            }
+            
+            renderInventory();
+            lokasyonModal.style.display = 'none';
+        });
+
+        // Lokasyon silme işlemi
+        document.getElementById('lokasyonSil').addEventListener('click', function() {
+            const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
+            const locationId = parseInt(mevcutLokasyonlar.value);
+            
+            if (locationId === 0) {
+                alert('Atanmamış lokasyonu silinemez!');
+                return;
+            }
+            
+            if (confirm('Bu lokasyonu silmek istediğinize emin misiniz? İçindeki ürünler Atanmamış bölümüne taşınacak.')) {
+                const locationIndex = inventory.locations.findIndex(loc => loc.id === locationId);
+                if (locationIndex !== -1) {
+                    const location = inventory.locations[locationIndex];
+                    const unassignedLocation = inventory.locations.find(loc => loc.id === 0);
+                    
+                    // Ürünleri Atanmamış bölümüne taşı
+                    if (unassignedLocation) {
+                        unassignedLocation.products.push(...location.products);
+                    }
+                    
+                    // Lokasyonu sil
+                    inventory.locations.splice(locationIndex, 1);
+                    
+                    renderInventory();
+                    lokasyonModal.style.display = 'none';
+                }
+            }
+        });
+
+        // Yeni lokasyon ekleme butonu
+        document.getElementById('yeniLokasyonEkle').addEventListener('click', function() {
+            showLokasyonModal('add');
+        });
+
+        // Ürün gönderme işlemi
+        document.getElementById('urunGonder').addEventListener('click', function() {
+            const productId = parseInt(document.getElementById('gonderilecekUrunId').value);
+            const targetLocationId = parseInt(document.getElementById('hedefLokasyonlar').value);
+            
+            let product = null;
+            let sourceLocation = null;
+            
+            // Ürünü ve kaynak lokasyonu bul
+            for (const location of inventory.locations) {
+                const productIndex = location.products.findIndex(p => p.id === productId);
+                if (productIndex !== -1) {
+                    product = location.products[productIndex];
+                    sourceLocation = location;
+                    break;
+                }
+            }
+            
+            if (!product || !sourceLocation) {
+                alert('Ürün bulunamadı!');
+                return;
+            }
+            
+            // Hedef lokasyonu bul
+            const targetLocation = findLocationById(targetLocationId);
+            if (!targetLocation) {
+                alert('Hedef lokasyon bulunamadı!');
+                return;
+            }
+            
+            // Ürünü kaynaktan sil ve hedefe ekle
+            const productIndex = sourceLocation.products.findIndex(p => p.id === productId);
+            if (productIndex !== -1) {
+                sourceLocation.products.splice(productIndex, 1);
+                targetLocation.products.push(product);
+            }
+            
+            renderInventory();
+            gonderModal.style.display = 'none';
+        });
+
+        // Modal dışına tıklanınca kapat
+        window.addEventListener('click', function(event) {
+            if (event.target === stokModal) {
+                stokModal.style.display = 'none';
+            }
+            if (event.target === lokasyonModal) {
+                lokasyonModal.style.display = 'none';
+            }
+            if (event.target === gonderModal) {
+                gonderModal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
