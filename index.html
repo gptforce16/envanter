@@ -1,1 +1,340 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envanter Yönetim Sistemi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #444;
+            margin-top: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .product-list, .location-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .product-list li, .location-list li {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+        .product-list li:last-child, .location-list li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            color: green;
+            font-style: italic;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .button-secondary {
+            background-color: #f44336;
+        }
+        .button-secondary:hover {
+            background-color: #d32f2f;
+        }
+        .transfer-section {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ENVANTER YÖNETİMİ</h1>
+        
+        <div class="section">
+            <h2>Ürün Ekle / Düzenle</h2>
+            <div class="form-group">
+                <label for="product-select">Ürün Seç (Düzenleme için):</label>
+                <select id="product-select">
+                    <option value="">Yeni Ürün Ekle</option>
+                    <option value="1">Ürün 1</option>
+                    <option value="2">Ürün 2</option>
+                    <option value="3">Ürün 3</option>
+                    <option value="4">Ürün 4</option>
+                    <option value="0">Ürün 0</option>
+                    <option value="6">Ürün 6</option>
+                    <option value="7">Ürün 7</option>
+                    <option value="8">Ürün 8</option>
+                    <option value="9">Ürün 9</option>
+                    <option value="10">Ürün 10</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="product-name">Ürün Adı:</label>
+                <input type="text" id="product-name" placeholder="Ürün adını girin">
+            </div>
+            
+            <div class="form-group">
+                <label for="product-quantity">Miktar:</label>
+                <input type="number" id="product-quantity" placeholder="Miktarı girin">
+            </div>
+            
+            <div class="form-group">
+                <label for="product-unit">Birim:</label>
+                <input type="text" id="product-unit" placeholder="Birim girin (adet, kg, litre vb.)">
+            </div>
+            
+            <div class="form-group">
+                <label for="product-location">Lokasyon:</label>
+                <select id="product-location">
+                    <option value="atanimiz">Atanımız</option>
+                    <option value="lokasyon1">Lokasyon 1</option>
+                    <option value="lokasyon2">Lokasyon 2</option>
+                    <option value="lokasyon3">Lokasyon 3</option>
+                </select>
+            </div>
+            
+            <button id="save-product">Kaydet</button>
+            <button id="delete-product" class="button-secondary">Sil</button>
+        </div>
+        
+        <div class="section">
+            <h2>Lokasyon Ekle / Düzenle</h2>
+            <div class="form-group">
+                <label for="location-select">Lokasyon Seç (Düzenleme için):</label>
+                <select id="location-select">
+                    <option value="">Yeni Lokasyon Ekle</option>
+                    <option value="lokasyon1">Lokasyon 1</option>
+                    <option value="lokasyon2">Lokasyon 2</option>
+                    <option value="lokasyon3">Lokasyon 3</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="location-name">Lokasyon Adı:</label>
+                <input type="text" id="location-name" placeholder="Lokasyon adını girin">
+            </div>
+            
+            <div class="form-group">
+                <label for="location-desc">Açıklama:</label>
+                <input type="text" id="location-desc" placeholder="Lokasyon açıklamasını girin">
+            </div>
+            
+            <button id="save-location">Kaydet</button>
+            <button id="delete-location" class="button-secondary">Sil</button>
+        </div>
+        
+        <div class="section transfer-section">
+            <h2>Ürün Transferi</h2>
+            <div class="form-group">
+                <label for="transfer-product">Transfer Edilecek Ürün:</label>
+                <select id="transfer-product">
+                    <option value="">Ürün seçin</option>
+                    <option value="1">Ürün 1</option>
+                    <option value="2">Ürün 2</option>
+                    <option value="3">Ürün 3</option>
+                    <option value="4">Ürün 4</option>
+                    <option value="0">Ürün 0</option>
+                    <option value="6">Ürün 6</option>
+                    <option value="7">Ürün 7</option>
+                    <option value="8">Ürün 8</option>
+                    <option value="9">Ürün 9</option>
+                    <option value="10">Ürün 10</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="transfer-from">Kaynak Lokasyon:</label>
+                <select id="transfer-from">
+                    <option value="">Lokasyon seçin</option>
+                    <option value="atanimiz">Atanımız</option>
+                    <option value="lokasyon1">Lokasyon 1</option>
+                    <option value="lokasyon2">Lokasyon 2</option>
+                    <option value="lokasyon3">Lokasyon 3</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="transfer-to">Hedef Lokasyon:</label>
+                <select id="transfer-to">
+                    <option value="">Lokasyon seçin</option>
+                    <option value="atanimiz">Atanımız</option>
+                    <option value="lokasyon1">Lokasyon 1</option>
+                    <option value="lokasyon2">Lokasyon 2</option>
+                    <option value="lokasyon3">Lokasyon 3</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="transfer-quantity">Transfer Miktarı:</label>
+                <input type="number" id="transfer-quantity" placeholder="Transfer miktarını girin">
+            </div>
+            
+            <button id="transfer-button">Transfer Et</button>
+        </div>
+        
+        <div class="section">
+            <h2>Atanımızın Envanteri</h2>
+            <ul class="product-list">
+                <li>Ürün 1 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 2 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 3 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 4 <span class="status">(Söndürülü)</span></li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Lokasyon 1 Envanteri</h2>
+            <ul class="product-list">
+                <li>Ürün 0 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 6 <span class="status">(Söndürülü)</span></li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Lokasyon 2 Envanteri</h2>
+            <ul class="product-list">
+                <li>Ürün 7 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 8 <span class="status">(Söndürülü)</span></li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Lokasyon 3 Envanteri</h2>
+            <ul class="product-list">
+                <li>Ürün 9 <span class="status">(Söndürülü)</span></li>
+                <li>Ürün 10 <span class="status">(Söndürülü)</span></li>
+            </ul>
+        </div>
+    </div>
 
+    <script>
+        // Ürün ekleme/düzenleme işlevselliği
+        document.getElementById('product-select').addEventListener('change', function() {
+            const selectedProduct = this.value;
+            if (selectedProduct) {
+                // Burada seçilen ürünün bilgilerini doldurmalıyız
+                // Örnek amaçlı rastgele değerler atıyorum
+                document.getElementById('product-name').value = 'Ürün ' + selectedProduct;
+                document.getElementById('product-quantity').value = Math.floor(Math.random() * 100) + 1;
+                document.getElementById('product-unit').value = 'adet';
+                
+                // Ürünün lokasyonunu belirleme (gerçek uygulamada veritabanından çekilmeli)
+                let location = 'atanimiz';
+                if (selectedProduct === '0' || selectedProduct === '6') location = 'lokasyon1';
+                else if (selectedProduct === '7' || selectedProduct === '8') location = 'lokasyon2';
+                else if (selectedProduct === '9' || selectedProduct === '10') location = 'lokasyon3';
+                
+                document.getElementById('product-location').value = location;
+            } else {
+                // Yeni ürün ekleme modu - formu temizle
+                document.getElementById('product-name').value = '';
+                document.getElementById('product-quantity').value = '';
+                document.getElementById('product-unit').value = '';
+                document.getElementById('product-location').value = 'atanimiz';
+            }
+        });
+        
+        // Lokasyon ekleme/düzenleme işlevselliği
+        document.getElementById('location-select').addEventListener('change', function() {
+            const selectedLocation = this.value;
+            if (selectedLocation) {
+                // Burada seçilen lokasyonun bilgilerini doldurmalıyız
+                document.getElementById('location-name').value = selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1);
+                document.getElementById('location-desc').value = selectedLocation + ' açıklaması';
+            } else {
+                // Yeni lokasyon ekleme modu - formu temizle
+                document.getElementById('location-name').value = '';
+                document.getElementById('location-desc').value = '';
+            }
+        });
+        
+        // Kaydet butonları için temel işlevler
+        document.getElementById('save-product').addEventListener('click', function() {
+            alert('Ürün bilgileri kaydedildi!');
+        });
+        
+        document.getElementById('save-location').addEventListener('click', function() {
+            alert('Lokasyon bilgileri kaydedildi!');
+        });
+        
+        document.getElementById('delete-product').addEventListener('click', function() {
+            if (confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+                alert('Ürün silindi!');
+            }
+        });
+        
+        document.getElementById('delete-location').addEventListener('click', function() {
+            if (confirm('Bu lokasyonu silmek istediğinize emin misiniz?')) {
+                alert('Lokasyon silindi!');
+            }
+        });
+        
+        document.getElementById('transfer-button').addEventListener('click', function() {
+            const product = document.getElementById('transfer-product').value;
+            const from = document.getElementById('transfer-from').value;
+            const to = document.getElementById('transfer-to').value;
+            const quantity = document.getElementById('transfer-quantity').value;
+            
+            if (!product || !from || !to || !quantity) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+            
+            if (from === to) {
+                alert('Kaynak ve hedef lokasyon aynı olamaz!');
+                return;
+            }
+            
+            alert(`Ürün ${product}, ${from} lokasyonundan ${to} lokasyonuna ${quantity} adet transfer edildi!`);
+        });
+    </script>
+</body>
+</html>
