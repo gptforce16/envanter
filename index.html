@@ -3,596 +3,683 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Envanter Yönetim Sistemi</title>
+    <title>JeoPro | Dijital Jeoloji Asistanı</title>
+    
+    <!-- Tailwind CSS (Arayüz Tasarımı İçin) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons (Modern İkonlar İçin) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- SweetAlert2 (Şık Bildirimler İçin) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Tailwind Konfigürasyonu -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
+        /* Genel Stiller ve Özel Scrollbar */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
         }
-        th {
-            background-color: #f2f2f2;
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
         }
-        button {
-            padding: 5px 10px;
-            cursor: pointer;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
         }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .modal {
+
+        /* Sayfa Geçiş Animasyonları */
+        .view-section {
             display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
+            animation: fadeIn 0.4s ease-in-out;
         }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 50%;
+        .view-section.active {
+            display: block;
         }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Çıktı (Print) Ayarları - Sadece rapor kısımlarını yazdırır */
+        @media print {
+            #sidebar, #mobile-header, .no-print {
+                display: none !important;
+            }
+            #main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background-color: white !important;
+            }
+            .print-container {
+                box-shadow: none !important;
+                border: none !important;
+            }
+            body {
+                background-color: white;
+            }
         }
     </style>
 </head>
-<body>
-    <h1>ENVANTER YÖNETİM SİSTEMİ</h1>
+<body class="flex h-screen overflow-hidden text-slate-800">
 
-    <div class="section">
-        <button id="stokEkleBtn">Stok Ekle / Düzenle</button>
-        <button id="lokasyonEkleBtn" style="margin-left: 20px;">Lokasyon Ekle / Düzenle</button>
-    </div>
-
-    <div id="inventoryContainer">
-        <!-- Dinamik olarak envanter bilgisi buraya eklenecek -->
-    </div>
-
-    <!-- Stok Ekle/Düzenle Modal -->
-    <div id="stokModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Stok Ekle / Düzenle</h2>
-            <div>
-                <label>Ürün Adı:</label>
-                <input type="text" id="urunAdi">
-            </div>
-            <div>
-                <label>Miktar:</label>
-                <input type="number" id="urunMiktar">
-            </div>
-            <div>
-                <label>Birim:</label>
-                <input type="text" id="urunBirim">
-            </div>
-            <div id="mevcutUrunlerDiv" style="display:none;">
-                <label>Mevcut Ürünler:</label>
-                <select id="mevcutUrunler"></select>
-            </div>
-            <button id="urunKaydet">Kaydet</button>
-            <button id="urunSil" style="display:none;">Sil</button>
-            <button id="yeniUrunEkle">Yeni Ürün Ekle</button>
+    <!-- Mobil Başlık -->
+    <div id="mobile-header" class="md:hidden flex items-center justify-between bg-brand-900 text-white p-4 w-full fixed top-0 z-20">
+        <div class="flex items-center gap-2 font-bold text-xl">
+            <i class="ph-fill ph-globe-hemisphere-west text-2xl"></i>
+            JeoPro
         </div>
+        <button onclick="toggleMobileMenu()" class="text-white focus:outline-none">
+            <i class="ph ph-list text-3xl"></i>
+        </button>
     </div>
 
-    <!-- Lokasyon Ekle/Düzenle Modal -->
-    <div id="lokasyonModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Lokasyon Ekle / Düzenle</h2>
-            <div>
-                <label>Lokasyon Adı:</label>
-                <input type="text" id="lokasyonAdi">
-            </div>
-            <div>
-                <label>İletişim Bilgisi (isteğe bağlı):</label>
-                <input type="text" id="lokasyonIletisim">
-            </div>
-            <div id="mevcutLokasyonlarDiv" style="display:none;">
-                <label>Mevcut Lokasyonlar:</label>
-                <select id="mevcutLokasyonlar"></select>
-            </div>
-            <button id="lokasyonKaydet">Kaydet</button>
-            <button id="lokasyonSil" style="display:none;">Sil</button>
-            <button id="yeniLokasyonEkle">Yeni Lokasyon Ekle</button>
+    <!-- Yan Menü (Sidebar) -->
+    <aside id="sidebar" class="bg-brand-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col fixed md:relative h-full z-30 transition-transform duration-300">
+        <div class="p-6 flex items-center gap-3 border-b border-brand-600/30">
+            <i class="ph-fill ph-globe-hemisphere-west text-3xl text-brand-500"></i>
+            <span class="text-2xl font-bold tracking-tight">JeoPro</span>
         </div>
-    </div>
+        
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+            <a href="#" onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg bg-brand-600/40 text-white transition-colors">
+                <i class="ph ph-squares-four text-xl"></i>
+                <span class="font-medium">Panel (Özet)</span>
+            </a>
+            <a href="#" onclick="navigate('spt')" id="nav-spt" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-brand-600/20 hover:text-white transition-colors">
+                <i class="ph ph-calculator text-xl"></i>
+                <span class="font-medium">SPT Hesaplayıcı</span>
+            </a>
+            <a href="#" onclick="navigate('borehole')" id="nav-borehole" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-brand-600/20 hover:text-white transition-colors">
+                <i class="ph ph-list-numbers text-xl"></i>
+                <span class="font-medium">Dijital Sondaj Logu</span>
+            </a>
+            <a href="#" onclick="navigate('mapping')" id="nav-mapping" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-brand-600/20 hover:text-white transition-colors">
+                <i class="ph ph-compass text-xl"></i>
+                <span class="font-medium">Akıllı Saha Defteri</span>
+            </a>
+        </nav>
 
-    <!-- Gönder Modal -->
-    <div id="gonderModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Ürün Gönder</h2>
-            <input type="hidden" id="gonderilecekUrunId">
-            <div>
-                <label>Hedef Lokasyon:</label>
-                <select id="hedefLokasyonlar"></select>
-            </div>
-            <button id="urunGonder">Gönder</button>
+        <div class="p-4 border-t border-brand-600/30 text-sm text-slate-400 text-center">
+            &copy; 2026 JeoPro SaaS<br>
+            <span class="text-xs">Versiyon 1.0</span>
         </div>
-    </div>
+    </aside>
 
+    <!-- Ana İçerik Alanı -->
+    <main id="main-content" class="flex-1 h-full overflow-y-auto pt-16 md:pt-0 bg-slate-50 relative">
+        
+        <!-- 1. DASHBOARD BÖLÜMÜ -->
+        <section id="dashboard" class="view-section active p-6 md:p-10">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-800">Hoş Geldiniz, Mühendis Bey</h1>
+                <p class="text-slate-500 mt-2">Saha ve ofis verilerinizi tek bir yerden yönetin.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- İstatistik Kartları -->
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                        <i class="ph-fill ph-file-text"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Aktif Projeler</p>
+                        <p class="text-2xl font-bold text-slate-800">3</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
+                        <i class="ph-fill ph-ruler"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Girilen Sondaj (Oturum)</p>
+                        <p class="text-2xl font-bold text-slate-800" id="stat-borehole-count">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+                        <i class="ph-fill ph-map-pin"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Saha Kaydı (Oturum)</p>
+                        <p class="text-2xl font-bold text-slate-800" id="stat-mapping-count">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center max-w-2xl mx-auto mt-12">
+                <i class="ph-duotone ph-rocket-launch text-6xl text-brand-500 mb-4"></i>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Hemen Çalışmaya Başlayın</h3>
+                <p class="text-slate-500 mb-6">Soldaki menüyü kullanarak geoteknik hesaplamalar yapabilir, sondaj verilerinizi girebilir veya saha defterinize yapısal ölçümlerinizi ekleyebilirsiniz.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="navigate('spt')" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
+                        SPT Hesapla
+                    </button>
+                    <button onclick="navigate('borehole')" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
+                        Sondaj Logu Gir
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SPT HESAPLAYICI BÖLÜMÜ -->
+        <section id="spt" class="view-section p-6 md:p-10">
+            <header class="mb-8 flex justify-between items-end">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">SPT N₆₀ Hesaplayıcı</h1>
+                    <p class="text-slate-500 mt-2">Geoteknik raporlar için standart penetrasyon testi düzeltmeleri.</p>
+                </div>
+            </header>
+
+            <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 md:p-8 max-w-3xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Arazi SPT N Değeri</label>
+                            <input type="number" id="spt-n" placeholder="Örn: 25" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Enerji Oranı (C<sub>E</sub>)</label>
+                            <select id="spt-ce" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="0.75">Otomatik Şahmerdan (%75 - 0.75)</option>
+                                <option value="0.60" selected>Güvenli Şahmerdan (%60 - 0.60)</option>
+                                <option value="0.45">Halka Şahmerdan (%45 - 0.45)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Sondaj Çapı (C<sub>B</sub>)</label>
+                            <select id="spt-cb" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="1.00">65 - 115 mm (1.00)</option>
+                                <option value="1.05">150 mm (1.05)</option>
+                                <option value="1.15">200 mm (1.15)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tij Uzunluğu (C<sub>R</sub>)</label>
+                            <select id="spt-cr" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="0.75">0 - 4 metre (0.75)</option>
+                                <option value="0.85">4 - 6 metre (0.85)</option>
+                                <option value="0.95">6 - 10 metre (0.95)</option>
+                                <option value="1.00">10+ metre (1.00)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Numune Alıcı (C<sub>S</sub>)</label>
+                            <select id="spt-cs" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="1.00">Standart Numune Alıcı (1.00)</option>
+                                <option value="1.20">İç Tüpsüz Numune Alıcı (1.20)</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-6">
+                            <button onclick="calculateSPT()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-calculator"></i> Hesapla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Alanı -->
+                <div id="spt-result-container" class="mt-8 bg-slate-800 text-white p-6 rounded-xl text-center hidden">
+                    <p class="text-slate-300 font-medium">Düzeltilmiş SPT N₆₀ Değeri</p>
+                    <div id="spt-result-value" class="text-5xl font-bold text-emerald-400 my-2">0</div>
+                    <p class="text-sm text-slate-400 mt-2">Sıvılaşma, taşıma gücü ve oturma analizlerinde bu değeri kullanabilirsiniz.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. DİJİTAL SONDAJ LOGU BÖLÜMÜ -->
+        <section id="borehole" class="view-section p-6 md:p-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">Dijital Sondaj Logu</h1>
+                    <p class="text-slate-500 mt-2">Sahada girilen litoloji ve karot verilerini tabloya dönüştürün.</p>
+                </div>
+                <button onclick="window.print()" class="no-print bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
+                    <i class="ph ph-printer"></i> PDF Olarak Al
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Form Alanı -->
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 no-print h-fit">
+                    <h3 class="font-bold text-lg border-b pb-3 mb-4">Yeni Seviye Ekle</h3>
+                    <form id="borehole-form" onsubmit="addBoreholeEntry(event)" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Üst Derinlik (m)</label>
+                                <input type="number" step="0.1" id="bh-from" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Alt Derinlik (m)</label>
+                                <input type="number" step="0.1" id="bh-to" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Litoloji / Zemin Türü</label>
+                            <input type="text" id="bh-lithology" required placeholder="Örn: Sıkı, kahverengi killi kum" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">TCR (%)</label>
+                                <input type="number" id="bh-tcr" max="100" min="0" placeholder="0-100" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">RQD (%)</label>
+                                <input type="number" id="bh-rqd" max="100" min="0" placeholder="0-100" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors mt-2">
+                            Loga Ekle
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Tablo Alanı -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-100 shadow-sm print-container overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">Proje: SK-1 Nolu Sondaj</h3>
+                            <p class="text-sm text-slate-500">Tarih: <span id="current-date"></span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-slate-200 rounded flex items-center justify-center text-slate-400 no-print">Logo</div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-sm border-y border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center border-r border-slate-200 w-24">Derinlik (m)</th>
+                                    <th class="py-3 px-4 font-semibold border-r border-slate-200">Litolojik Tanımlama</th>
+                                    <th class="py-3 px-4 font-semibold text-center border-r border-slate-200 w-20">TCR (%)</th>
+                                    <th class="py-3 px-4 font-semibold text-center border-r border-slate-200 w-20">RQD (%)</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-16 no-print">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="borehole-table-body">
+                                <!-- JS ile Doldurulacak -->
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-400 bg-white">
+                                        <i class="ph-duotone ph-file-dashed text-4xl mb-2"></i><br>
+                                        Henüz log verisi eklenmedi.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. AKILLI SAHA DEFTERİ BÖLÜMÜ -->
+        <section id="mapping" class="view-section p-6 md:p-10">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-800">Akıllı Saha Defteri</h1>
+                <p class="text-slate-500 mt-2">Yapısal ölçümleri ve formasyon bilgilerini dijital olarak kaydedin.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Form Alanı -->
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 h-fit">
+                    <h3 class="font-bold text-lg border-b pb-3 mb-4">Yeni Ölçüm Ekle</h3>
+                    <form id="mapping-form" onsubmit="addMappingEntry(event)" class="space-y-4">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">İstasyon / Nokta No</label>
+                            <input type="text" id="map-station" required placeholder="Örn: ST-01" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kayaç Türü / Formasyon</label>
+                            <input type="text" id="map-rock" required placeholder="Örn: Kireçtaşı (Jura)" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Doğrultu (°)</label>
+                                <input type="text" id="map-strike" placeholder="Örn: K45D" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Eğim (°)</label>
+                                <input type="text" id="map-dip" placeholder="Örn: 30 GD" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Saha Notları</label>
+                            <textarea id="map-notes" rows="2" placeholder="Faylanma izleri var, bol fosilli..." class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-brand-500"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors mt-2 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-floppy-disk"></i> Deftere Kaydet
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Tablo Alanı -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-800">Saha Verileri Tablosu</h3>
+                        <button onclick="exportMappingCSV()" class="text-sm bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+                            <i class="ph ph-download-simple"></i> CSV İndir
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-sm border-y border-slate-200">
+                                    <th class="py-3 px-4 font-semibold border-r border-slate-200 w-24">İst. No</th>
+                                    <th class="py-3 px-4 font-semibold border-r border-slate-200">Kayaç/Formasyon</th>
+                                    <th class="py-3 px-4 font-semibold text-center border-r border-slate-200">Konum (Doğ/Eğim)</th>
+                                    <th class="py-3 px-4 font-semibold border-r border-slate-200 min-w-[150px]">Notlar</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-16">Sil</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mapping-table-body">
+                                <!-- JS ile Doldurulacak -->
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-400 bg-white">
+                                        <i class="ph-duotone ph-notebook text-4xl mb-2"></i><br>
+                                        Saha defteri şu an boş.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Uygulama Mantığı (Javascript) -->
     <script>
-        // Başlangıç verileri
-        let inventory = {
-            locations: [
-                {
-                    id: 0,
-                    name: "Atanmamış",
-                    contact: null,
-                    products: [
-                        {id: 1, name: "Ürün1", quantity: 10, unit: "adet"},
-                        {id: 2, name: "Ürün2", quantity: 5, unit: "adet"},
-                        {id: 3, name: "Ürün3", quantity: 8, unit: "adet"},
-                        {id: 4, name: "Ürün4", quantity: 3, unit: "adet"}
-                    ]
-                },
-                {
-                    id: 1,
-                    name: "Lokasyon 1",
-                    contact: "Depo 1",
-                    products: [
-                        {id: 5, name: "Ürün5", quantity: 7, unit: "adet"},
-                        {id: 6, name: "Ürün6", quantity: 2, unit: "adet"}
-                    ]
-                },
-                {
-                    id: 2,
-                    name: "Lokasyon 2",
-                    contact: "Depo 2",
-                    products: [
-                        {id: 7, name: "Ürün7", quantity: 4, unit: "adet"},
-                        {id: 8, name: "Ürün8", quantity: 6, unit: "adet"}
-                    ]
-                },
-                {
-                    id: 3,
-                    name: "Lokasyon 3",
-                    contact: "Mağaza",
-                    products: [
-                        {id: 9, name: "Ürün9", quantity: 9, unit: "adet"},
-                        {id: 10, name: "Ürün10", quantity: 1, unit: "adet"}
-                    ]
-                }
-            ],
-            nextProductId: 11,
-            nextLocationId: 4
+        // 1. Durum Yönetimi (State Management)
+        // Geçici oturum belleğinde tutulur (Sayfa yenilendiğinde sıfırlanır, ileride veritabanına bağlanacak).
+        const state = {
+            boreholes: [],
+            mappings: []
         };
 
-        // DOM elementleri
-        const inventoryContainer = document.getElementById('inventoryContainer');
-        const stokModal = document.getElementById('stokModal');
-        const lokasyonModal = document.getElementById('lokasyonModal');
-        const gonderModal = document.getElementById('gonderModal');
-        const stokEkleBtn = document.getElementById('stokEkleBtn');
-        const lokasyonEkleBtn = document.getElementById('lokasyonEkleBtn');
-        const closeButtons = document.querySelectorAll('.close');
+        // Tarih Ayarlama
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('tr-TR');
 
-        // Sayfa yüklendiğinde envanteri göster
-        document.addEventListener('DOMContentLoaded', renderInventory);
-
-        // Modal açma/kapatma işlemleri
-        stokEkleBtn.addEventListener('click', () => {
-            showStokModal('add');
-        });
-
-        lokasyonEkleBtn.addEventListener('click', () => {
-            showLokasyonModal('add');
-        });
-
-        closeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                stokModal.style.display = 'none';
-                lokasyonModal.style.display = 'none';
-                gonderModal.style.display = 'none';
-            });
-        });
-
-        // Envanteri ekranda göster
-        function renderInventory() {
-            inventoryContainer.innerHTML = '';
-            
-            inventory.locations.forEach(location => {
-                const section = document.createElement('div');
-                section.className = 'section';
-                
-                const title = document.createElement('div');
-                title.className = 'section-title';
-                title.textContent = location.name;
-                section.appendChild(title);
-                
-                const table = document.createElement('table');
-                
-                location.products.forEach(product => {
-                    const row = document.createElement('tr');
-                    
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = `${product.name} (${product.quantity} ${product.unit})`;
-                    row.appendChild(nameCell);
-                    
-                    const actionCell = document.createElement('td');
-                    const sendButton = document.createElement('button');
-                    sendButton.textContent = 'Gönder';
-                    sendButton.addEventListener('click', () => showGonderModal(product.id, location.id));
-                    actionCell.appendChild(sendButton);
-                    row.appendChild(actionCell);
-                    
-                    table.appendChild(row);
-                });
-                
-                section.appendChild(table);
-                inventoryContainer.appendChild(section);
-            });
-        }
-
-        // Stok modalını göster
-        function showStokModal(mode, productId = null) {
-            const mevcutUrunlerDiv = document.getElementById('mevcutUrunlerDiv');
-            const urunSilBtn = document.getElementById('urunSil');
-            const yeniUrunEkleBtn = document.getElementById('yeniUrunEkle');
-            
-            if (mode === 'edit') {
-                mevcutUrunlerDiv.style.display = 'block';
-                urunSilBtn.style.display = 'inline-block';
-                yeniUrunEkleBtn.style.display = 'inline-block';
-                
-                // Mevcut ürünleri dropdown'a doldur
-                const mevcutUrunler = document.getElementById('mevcutUrunler');
-                mevcutUrunler.innerHTML = '';
-                
-                let allProducts = [];
-                inventory.locations.forEach(loc => {
-                    loc.products.forEach(prod => {
-                        allProducts.push(prod);
-                    });
-                });
-                
-                allProducts.forEach(prod => {
-                    const option = document.createElement('option');
-                    option.value = prod.id;
-                    option.textContent = `${prod.name} (${prod.quantity} ${prod.unit})`;
-                    mevcutUrunler.appendChild(option);
-                });
-                
-                // Seçili ürünü doldur
-                if (productId) {
-                    const product = findProductById(productId);
-                    if (product) {
-                        mevcutUrunler.value = productId;
-                        document.getElementById('urunAdi').value = product.name;
-                        document.getElementById('urunMiktar').value = product.quantity;
-                        document.getElementById('urunBirim').value = product.unit;
-                    }
-                }
-                
-                // Ürün seçildiğinde formu doldur
-                mevcutUrunler.addEventListener('change', function() {
-                    const selectedId = parseInt(this.value);
-                    const product = findProductById(selectedId);
-                    if (product) {
-                        document.getElementById('urunAdi').value = product.name;
-                        document.getElementById('urunMiktar').value = product.quantity;
-                        document.getElementById('urunBirim').value = product.unit;
-                    }
-                });
-            } else {
-                mevcutUrunlerDiv.style.display = 'none';
-                urunSilBtn.style.display = 'none';
-                yeniUrunEkleBtn.style.display = 'none';
-                
-                // Formu temizle
-                document.getElementById('urunAdi').value = '';
-                document.getElementById('urunMiktar').value = '';
-                document.getElementById('urunBirim').value = 'adet';
-            }
-            
-            stokModal.style.display = 'block';
-        }
-
-        // Lokasyon modalını göster
-        function showLokasyonModal(mode, locationId = null) {
-            const mevcutLokasyonlarDiv = document.getElementById('mevcutLokasyonlarDiv');
-            const lokasyonSilBtn = document.getElementById('lokasyonSil');
-            const yeniLokasyonEkleBtn = document.getElementById('yeniLokasyonEkle');
-            
-            if (mode === 'edit') {
-                mevcutLokasyonlarDiv.style.display = 'block';
-                lokasyonSilBtn.style.display = 'inline-block';
-                yeniLokasyonEkleBtn.style.display = 'inline-block';
-                
-                // Mevcut lokasyonları dropdown'a doldur
-                const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
-                mevcutLokasyonlar.innerHTML = '';
-                
-                inventory.locations.forEach(loc => {
-                    if (loc.id !== 0) { // Atanmamış lokasyonunu hariç tut
-                        const option = document.createElement('option');
-                        option.value = loc.id;
-                        option.textContent = loc.name;
-                        mevcutLokasyonlar.appendChild(option);
-                    }
-                });
-                
-                // Seçili lokasyonu doldur
-                if (locationId) {
-                    const location = findLocationById(locationId);
-                    if (location) {
-                        mevcutLokasyonlar.value = locationId;
-                        document.getElementById('lokasyonAdi').value = location.name;
-                        document.getElementById('lokasyonIletisim').value = location.contact || '';
-                    }
-                }
-                
-                // Lokasyon seçildiğinde formu doldur
-                mevcutLokasyonlar.addEventListener('change', function() {
-                    const selectedId = parseInt(this.value);
-                    const location = findLocationById(selectedId);
-                    if (location) {
-                        document.getElementById('lokasyonAdi').value = location.name;
-                        document.getElementById('lokasyonIletisim').value = location.contact || '';
-                    }
-                });
-            } else {
-                mevcutLokasyonlarDiv.style.display = 'none';
-                lokasyonSilBtn.style.display = 'none';
-                yeniLokasyonEkleBtn.style.display = 'none';
-                
-                // Formu temizle
-                document.getElementById('lokasyonAdi').value = '';
-                document.getElementById('lokasyonIletisim').value = '';
-            }
-            
-            lokasyonModal.style.display = 'block';
-        }
-
-        // Gönder modalını göster
-        function showGonderModal(productId, currentLocationId) {
-            document.getElementById('gonderilecekUrunId').value = productId;
-            
-            // Hedef lokasyonları dropdown'a doldur (mevcut lokasyon hariç)
-            const hedefLokasyonlar = document.getElementById('hedefLokasyonlar');
-            hedefLokasyonlar.innerHTML = '';
-            
-            inventory.locations.forEach(loc => {
-                if (loc.id !== currentLocationId) {
-                    const option = document.createElement('option');
-                    option.value = loc.id;
-                    option.textContent = loc.name;
-                    hedefLokasyonlar.appendChild(option);
-                }
+        // 2. Navigasyon ve Menü İşlemleri
+        function navigate(viewId) {
+            // Tüm sayfaları gizle
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
             });
             
-            gonderModal.style.display = 'block';
+            // Seçilen sayfayı göster
+            document.getElementById(viewId).classList.add('active');
+
+            // Menü stillerini güncelle
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-brand-600/40', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+            
+            const activeNav = document.getElementById('nav-' + viewId);
+            if(activeNav) {
+                activeNav.classList.remove('text-slate-300');
+                activeNav.classList.add('bg-brand-600/40', 'text-white');
+            }
+
+            // Mobilde menüyü kapat
+            const sidebar = document.getElementById('sidebar');
+            if(window.innerWidth < 768) {
+                sidebar.classList.add('hidden');
+            }
         }
 
-        // Ürün bulma yardımcı fonksiyonu
-        function findProductById(productId) {
-            for (const location of inventory.locations) {
-                for (const product of location.products) {
-                    if (product.id === productId) {
-                        return product;
-                    }
-                }
-            }
-            return null;
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('fixed');
+            sidebar.classList.toggle('w-full');
+            sidebar.classList.toggle('h-full');
+            sidebar.classList.toggle('bg-brand-900');
         }
 
-        // Lokasyon bulma yardımcı fonksiyonu
-        function findLocationById(locationId) {
-            return inventory.locations.find(loc => loc.id === locationId);
+        // 3. SPT Hesaplayıcı Mantığı
+        function calculateSPT() {
+            const nValue = parseFloat(document.getElementById('spt-n').value);
+            const ce = parseFloat(document.getElementById('spt-ce').value);
+            const cb = parseFloat(document.getElementById('spt-cb').value);
+            const cr = parseFloat(document.getElementById('spt-cr').value);
+            const cs = parseFloat(document.getElementById('spt-cs').value);
+
+            if (isNaN(nValue) || nValue <= 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hatalı Veri',
+                    text: 'Lütfen geçerli bir Arazi SPT N değeri giriniz.',
+                    confirmButtonColor: '#0ea5e9'
+                });
+                return;
+            }
+
+            // N60 = N * Ce * Cb * Cr * Cs
+            let n60 = nValue * ce * cb * cr * cs;
+            n60 = Math.round(n60); // Pratik yuvarlama
+
+            const resultContainer = document.getElementById('spt-result-container');
+            const resultValue = document.getElementById('spt-result-value');
+
+            resultValue.textContent = n60;
+            resultContainer.classList.remove('hidden');
+            
+            // Animasyon tetikleme
+            resultContainer.classList.add('animate-pulse');
+            setTimeout(() => resultContainer.classList.remove('animate-pulse'), 500);
         }
 
-        // Ürün kaydetme işlemi
-        document.getElementById('urunKaydet').addEventListener('click', function() {
-            const urunAdi = document.getElementById('urunAdi').value;
-            const urunMiktar = parseInt(document.getElementById('urunMiktar').value);
-            const urunBirim = document.getElementById('urunBirim').value;
+        // 4. Sondaj Logu Yönetimi
+        function addBoreholeEntry(e) {
+            e.preventDefault();
             
-            if (!urunAdi || isNaN(urunMiktar) || !urunBirim) {
-                alert('Lütfen tüm alanları doldurun!');
+            const from = parseFloat(document.getElementById('bh-from').value);
+            const to = parseFloat(document.getElementById('bh-to').value);
+            const lithology = document.getElementById('bh-lithology').value;
+            const tcr = document.getElementById('bh-tcr').value || '-';
+            const rqd = document.getElementById('bh-rqd').value || '-';
+
+            if (from >= to) {
+                Swal.fire({icon: 'error', title: 'Hata', text: 'Alt derinlik, üst derinlikten büyük olmalıdır.'});
                 return;
             }
-            
-            const mevcutUrunler = document.getElementById('mevcutUrunler');
-            if (mevcutUrunler.style.display === 'block') {
-                // Düzenleme modu
-                const productId = parseInt(mevcutUrunler.value);
-                const product = findProductById(productId);
-                if (product) {
-                    product.name = urunAdi;
-                    product.quantity = urunMiktar;
-                    product.unit = urunBirim;
-                }
-            } else {
-                // Yeni ekleme modu
-                const newProduct = {
-                    id: inventory.nextProductId++,
-                    name: urunAdi,
-                    quantity: urunMiktar,
-                    unit: urunBirim
-                };
-                
-                // Atanmamış bölümüne ekle
-                const unassignedLocation = inventory.locations.find(loc => loc.id === 0);
-                if (unassignedLocation) {
-                    unassignedLocation.products.push(newProduct);
-                }
-            }
-            
-            renderInventory();
-            stokModal.style.display = 'none';
-        });
 
-        // Ürün silme işlemi
-        document.getElementById('urunSil').addEventListener('click', function() {
-            const mevcutUrunler = document.getElementById('mevcutUrunler');
-            const productId = parseInt(mevcutUrunler.value);
+            const entry = { id: Date.now(), from, to, lithology, tcr, rqd };
+            state.boreholes.push(entry);
             
-            if (confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
-                for (const location of inventory.locations) {
-                    const index = location.products.findIndex(p => p.id === productId);
-                    if (index !== -1) {
-                        location.products.splice(index, 1);
-                        break;
-                    }
-                }
-                
-                renderInventory();
-                stokModal.style.display = 'none';
-            }
-        });
-
-        // Yeni ürün ekleme butonu
-        document.getElementById('yeniUrunEkle').addEventListener('click', function() {
-            showStokModal('add');
-        });
-
-        // Lokasyon kaydetme işlemi
-        document.getElementById('lokasyonKaydet').addEventListener('click', function() {
-            const lokasyonAdi = document.getElementById('lokasyonAdi').value;
-            const lokasyonIletisim = document.getElementById('lokasyonIletisim').value;
+            // Derinliğe göre sırala
+            state.boreholes.sort((a, b) => a.from - b.from);
             
-            if (!lokasyonAdi) {
-                alert('Lokasyon adı zorunludur!');
+            renderBoreholeTable();
+            document.getElementById('borehole-form').reset();
+            updateStats();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Eklendi',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+
+        function deleteBorehole(id) {
+            state.boreholes = state.boreholes.filter(item => item.id !== id);
+            renderBoreholeTable();
+            updateStats();
+        }
+
+        function renderBoreholeTable() {
+            const tbody = document.getElementById('borehole-table-body');
+            
+            if (state.boreholes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 bg-white"><i class="ph-duotone ph-file-dashed text-4xl mb-2"></i><br>Henüz log verisi eklenmedi.</td></tr>`;
                 return;
             }
-            
-            const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
-            if (mevcutLokasyonlar.style.display === 'block') {
-                // Düzenleme modu
-                const locationId = parseInt(mevcutLokasyonlar.value);
-                const location = findLocationById(locationId);
-                if (location) {
-                    location.name = lokasyonAdi;
-                    location.contact = lokasyonIletisim || null;
-                }
-            } else {
-                // Yeni ekleme modu
-                const newLocation = {
-                    id: inventory.nextLocationId++,
-                    name: lokasyonAdi,
-                    contact: lokasyonIletisim || null,
-                    products: []
-                };
-                
-                inventory.locations.push(newLocation);
-            }
-            
-            renderInventory();
-            lokasyonModal.style.display = 'none';
-        });
 
-        // Lokasyon silme işlemi
-        document.getElementById('lokasyonSil').addEventListener('click', function() {
-            const mevcutLokasyonlar = document.getElementById('mevcutLokasyonlar');
-            const locationId = parseInt(mevcutLokasyonlar.value);
+            let html = '';
+            state.boreholes.forEach(item => {
+                html += `
+                    <tr class="bg-white border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-3 px-4 border-r border-slate-200 text-center font-medium">${item.from.toFixed(2)} - ${item.to.toFixed(2)}</td>
+                        <td class="py-3 px-4 border-r border-slate-200">${item.lithology}</td>
+                        <td class="py-3 px-4 border-r border-slate-200 text-center">${item.tcr}</td>
+                        <td class="py-3 px-4 border-r border-slate-200 text-center font-semibold text-brand-600">${item.rqd}</td>
+                        <td class="py-3 px-4 text-center no-print">
+                            <button onclick="deleteBorehole(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // 5. Akıllı Saha Defteri Yönetimi
+        function addMappingEntry(e) {
+            e.preventDefault();
             
-            if (locationId === 0) {
-                alert('Atanmamış lokasyonu silinemez!');
+            const station = document.getElementById('map-station').value;
+            const rock = document.getElementById('map-rock').value;
+            const strike = document.getElementById('map-strike').value;
+            const dip = document.getElementById('map-dip').value;
+            const notes = document.getElementById('map-notes').value || '-';
+
+            const entry = { id: Date.now(), station, rock, strike, dip, notes };
+            state.mappings.push(entry);
+            
+            renderMappingTable();
+            document.getElementById('mapping-form').reset();
+            updateStats();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Deftere Kaydedildi',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+
+        function deleteMapping(id) {
+            state.mappings = state.mappings.filter(item => item.id !== id);
+            renderMappingTable();
+            updateStats();
+        }
+
+        function renderMappingTable() {
+            const tbody = document.getElementById('mapping-table-body');
+            
+            if (state.mappings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 bg-white"><i class="ph-duotone ph-notebook text-4xl mb-2"></i><br>Saha defteri şu an boş.</td></tr>`;
                 return;
             }
-            
-            if (confirm('Bu lokasyonu silmek istediğinize emin misiniz? İçindeki ürünler Atanmamış bölümüne taşınacak.')) {
-                const locationIndex = inventory.locations.findIndex(loc => loc.id === locationId);
-                if (locationIndex !== -1) {
-                    const location = inventory.locations[locationIndex];
-                    const unassignedLocation = inventory.locations.find(loc => loc.id === 0);
-                    
-                    // Ürünleri Atanmamış bölümüne taşı
-                    if (unassignedLocation) {
-                        unassignedLocation.products.push(...location.products);
-                    }
-                    
-                    // Lokasyonu sil
-                    inventory.locations.splice(locationIndex, 1);
-                    
-                    renderInventory();
-                    lokasyonModal.style.display = 'none';
-                }
-            }
-        });
 
-        // Yeni lokasyon ekleme butonu
-        document.getElementById('yeniLokasyonEkle').addEventListener('click', function() {
-            showLokasyonModal('add');
-        });
+            let html = '';
+            state.mappings.forEach(item => {
+                html += `
+                    <tr class="bg-white border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-3 px-4 border-r border-slate-200 font-medium">${item.station}</td>
+                        <td class="py-3 px-4 border-r border-slate-200">${item.rock}</td>
+                        <td class="py-3 px-4 border-r border-slate-200 text-center font-mono bg-slate-50">${item.strike} / ${item.dip}</td>
+                        <td class="py-3 px-4 border-r border-slate-200 text-sm text-slate-600">${item.notes}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteMapping(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded">
+                                <i class="ph-bold ph-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
 
-        // Ürün gönderme işlemi
-        document.getElementById('urunGonder').addEventListener('click', function() {
-            const productId = parseInt(document.getElementById('gonderilecekUrunId').value);
-            const targetLocationId = parseInt(document.getElementById('hedefLokasyonlar').value);
-            
-            let product = null;
-            let sourceLocation = null;
-            
-            // Ürünü ve kaynak lokasyonu bul
-            for (const location of inventory.locations) {
-                const productIndex = location.products.findIndex(p => p.id === productId);
-                if (productIndex !== -1) {
-                    product = location.products[productIndex];
-                    sourceLocation = location;
-                    break;
-                }
-            }
-            
-            if (!product || !sourceLocation) {
-                alert('Ürün bulunamadı!');
+        // CSV Dışa Aktar (Saha Defteri İçin Harika Bir Özellik)
+        function exportMappingCSV() {
+            if (state.mappings.length === 0) {
+                Swal.fire('Hata', 'Dışa aktarılacak veri bulunamadı.', 'warning');
                 return;
             }
-            
-            // Hedef lokasyonu bul
-            const targetLocation = findLocationById(targetLocationId);
-            if (!targetLocation) {
-                alert('Hedef lokasyon bulunamadı!');
-                return;
-            }
-            
-            // Ürünü kaynaktan sil ve hedefe ekle
-            const productIndex = sourceLocation.products.findIndex(p => p.id === productId);
-            if (productIndex !== -1) {
-                sourceLocation.products.splice(productIndex, 1);
-                targetLocation.products.push(product);
-            }
-            
-            renderInventory();
-            gonderModal.style.display = 'none';
-        });
 
-        // Modal dışına tıklanınca kapat
-        window.addEventListener('click', function(event) {
-            if (event.target === stokModal) {
-                stokModal.style.display = 'none';
-            }
-            if (event.target === lokasyonModal) {
-                lokasyonModal.style.display = 'none';
-            }
-            if (event.target === gonderModal) {
-                gonderModal.style.display = 'none';
-            }
-        });
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // UTF-8 BOM eklendi (Türkçe karakterler için)
+            csvContent += "Istasyon,Kayac_Turu,Dogrultu,Egim,Notlar\n"; // Başlıklar
+
+            state.mappings.forEach(row => {
+                const rowStr = `"${row.station}","${row.rock}","${row.strike}","${row.dip}","${row.notes}"`;
+                csvContent += rowStr + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "saha_verileri.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // İstatistikleri Güncelle
+        function updateStats() {
+            document.getElementById('stat-borehole-count').textContent = state.boreholes.length;
+            document.getElementById('stat-mapping-count').textContent = state.mappings.length;
+        }
+
     </script>
 </body>
 </html>
