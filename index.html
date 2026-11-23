@@ -50,12 +50,6 @@ input.red::placeholder { color: var(--muted); opacity: .6; font-weight: 400; }
 input:focus, select:focus { outline: none; border-color: var(--text); background-color: var(--card); }
 button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 button { font: inherit; cursor: pointer; }
-.adds { display: flex; gap: 8px; overflow-x: auto; padding: 16px 16px 2px; margin: 0 -16px; scrollbar-width: none; }
-.adds::-webkit-scrollbar { display: none; }
-.add { flex: none; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 9px; padding: 9px 13px; font-weight: 600; font-size: 13.5px; white-space: nowrap; }
-.add:active { background: var(--soft); }
-.add b { font-size: 16px; line-height: 1; color: var(--muted); font-weight: 500; }
-.add em { font-style: normal; color: var(--muted); font-size: 12px; font-weight: 600; }
 .btn { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 0 20px; min-height: 46px; font-weight: 650; font-size: 15px; }
 .btn:disabled { opacity: .3; cursor: not-allowed; }
 .insts { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -74,7 +68,7 @@ button { font: inherit; cursor: pointer; }
 .body { padding: 0 16px 14px; border-top: 1px solid var(--line); }
 .body.hidden { display: none; }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; padding-top: 16px; }
-@media (min-width: 560px) { .fields { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
 .res { margin-top: 16px; }
 .res:empty { display: none; }
 .pz { display: grid; grid-template-columns: 58px 1fr auto; gap: 2px 12px; padding: 11px 0; border-top: 1px solid var(--line); align-items: start; }
@@ -107,6 +101,22 @@ button { font: inherit; cursor: pointer; }
 .bar .in { max-width: 760px; margin: 0 auto; display: flex; gap: 12px; align-items: center; }
 .bar .info { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(88px + env(safe-area-inset-bottom, 0px)); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13.5px; z-index: 30; max-width: 90vw; }
+.layout { display: block; }
+.addsel { margin-top: 16px; }
+.addsel select { font-weight: 600; border-color: var(--text); background-color: var(--card); min-height: 48px; }
+.unit > header { padding: 14px 16px; }
+.unit > header b { display: block; font-size: 15.5px; font-weight: 650; }
+.unit > header small { display: block; color: var(--muted); font-size: 12.5px; }
+.unit .res { margin: 0; padding: 0 16px 6px; border-top: 1px solid var(--line); }
+.unit .miss { padding: 14px 16px; color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); }
+#units { display: grid; gap: 12px; margin-top: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) {
+  .wrap { max-width: 1180px; }
+  .layout { display: grid; grid-template-columns: 370px minmax(0, 1fr); gap: 28px; align-items: start; }
+  #p0, #p0[hidden] { display: block; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 112px); max-height: calc(100vh - 210px); overflow-y: auto; padding: 0 2px 8px 0; scrollbar-width: thin; }
+  #tab0 { display: none; }
+  .bar .in { max-width: 1180px; }
+}
 </style>
 </head>
 <body>
@@ -116,15 +126,21 @@ button { font: inherit; cursor: pointer; }
             <input type="text" id="job" placeholder="İşin adı" aria-label="İşin adı" autocomplete="off">
     </div>
     <div class="tabs" role="tablist">
-      <button class="tab on" id="tab1" role="tab" data-tab="1">Birim metrajlar <em id="c1">0</em></button>
-      <button class="tab" id="tab2" role="tab" data-tab="2">Genel metraj <em id="c2">0</em></button>
+      <button class="tab" id="tab0" role="tab" data-tab="0">Veri girişi <em id="c0">0</em></button>
+      <button class="tab" id="tab1" role="tab" data-tab="1">Genel metraj <em id="c1">0</em></button>
+      <button class="tab" id="tab2" role="tab" data-tab="2">Birim metrajlar <em id="c2">0</em></button>
     </div>
   </div>
-  <section class="panel" id="p1">
-    <div class="adds" id="types"></div>
-    <div class="insts" id="insts"></div>
-  </section>
-  <section class="panel" id="p2" hidden><div id="gm"></div></section>
+  <div class="layout">
+    <section class="panel" id="p0">
+      <div class="addsel"><select id="addSel" aria-label="Birim metraj ekle"></select></div>
+      <div class="insts" id="insts"></div>
+    </section>
+    <div class="right">
+      <section class="panel" id="p1" hidden><div id="gm"></div></section>
+      <section class="panel" id="p2" hidden><div id="units"></div></section>
+    </div>
+  </div>
 </div>
 
 <div class="bar"><div class="in">
@@ -639,10 +655,7 @@ var MetrajCore = (function () {
 
   /* ---- tür kartları ---- */
   function renderTypes() {
-    $('types').innerHTML = D.types.map(function (t) {
-      var n = state.items.filter(function (i) { return i.typeId === t.id; }).length;
-      return '<button class="add" data-add="' + t.id + '"><b>+</b>' + esc(t.sheet) + (n ? '<em>' + n + '</em>' : '') + '</button>';
-    }).join('');
+    $('addSel').innerHTML = '<option value="">+ Birim metraj ekle</option>' + D.types.map(function (t) { return '<option value="' + t.id + '">' + esc(t.sheet) + '</option>'; }).join('');
   }
 
   /* ---- hesap ---- */
@@ -673,7 +686,7 @@ var MetrajCore = (function () {
   function renderInsts() {
     var nm = names();
     var el = $('insts');
-    if (!state.items.length) { el.innerHTML = '<div class="card empty">Yukarıdan birim metraj ekle</div>'; return; }
+    if (!state.items.length) { el.innerHTML = ''; return; }
     el.innerHTML = state.items.map(function (item) {
       var t = T[item.typeId];
       return '<section class="card inst" id="in_' + item.id + '"><header>' +
@@ -683,24 +696,30 @@ var MetrajCore = (function () {
         '<button class="icon danger" data-del="' + item.id + '" aria-label="Kaldır">✕</button></header>' +
         '<div class="body' + (item.open ? '' : ' hidden') + '">' +
         '<div class="fields">' + t.inputs.map(function (inp) { return fieldHtml(item, inp); }).join('') + '</div>' +
-        '<div class="res" data-res="' + item.id + '"></div>' +
-        '<button class="dup" data-dup="' + item.id + '">Kopyasını ekle</button>' +
         '</div></section>';
     }).join('');
   }
 
+  function renderUnits() {
+    var nm = names();
+    $('units').innerHTML = state.items.length ? state.items.map(function (item) {
+      return '<section class="card unit"><header><b>' + esc(nm[item.id]) + '</b><small data-title="' + item.id + '"></small></header><div data-res="' + item.id + '"></div></section>';
+    }).join('') : '<div class="card empty">Birim metraj yok</div>';
+  }
   function renderResults(r) {
     var id = r.item.id, res = document.querySelector('[data-res="' + id + '"]');
-    var chip = document.querySelector('[data-status="' + id + '"]'), tt = document.querySelector('[data-title="' + id + '"]');
+    var chip = document.querySelector('[data-status="' + id + '"]'), tts = document.querySelectorAll('[data-title="' + id + '"]');
+    var tt = { set textContent(v) { tts.forEach(function (x) { x.textContent = v; }); } };
     if (!res) return;
     if (!r.calc.complete) {
-      chip.className = 'chip warn'; chip.textContent = 'Eksik'; tt.textContent = ''; res.innerHTML = '';
+      chip.className = 'chip warn'; chip.textContent = 'Eksik'; tt.textContent = ''; res.className = ''; res.innerHTML = '<div class="miss">Eksik değer: ' + esc(r.calc.missing.join(', ')) + '</div>';
       return;
     }
     var bad = r.calc.rows.filter(function (x) { return x.err; }).length;
     var nz = r.calc.rows.filter(function (x) { return !x.err && x.qty; }).length;
     chip.className = 'chip ' + (bad ? 'err' : 'ok'); chip.textContent = bad ? bad + ' kalem hesaplanamadı' : 'Hazır';
     tt.textContent = r.calc.title;
+    res.className = 'res';
     res.innerHTML = r.calc.rows.map(function (x) {
       if (x.err) return '<div class="pz bad"><div class="c">' + esc(typeof x.code === 'string' ? x.code : '—') + '</div><div class="n">' + esc(typeof x.name === 'string' ? x.name : 'Bu çap/atü için poz bulunamadı') + '</div><div class="q">—<small>' + esc(x.err) + '</small></div></div>';
       var z = !C.roundDec(x.qty, 3);
@@ -728,7 +747,7 @@ var MetrajCore = (function () {
         }).join('') + '</div>';
     }
     $('gm').innerHTML = html;
-    $('c1').textContent = results.length; $('c2').textContent = g.blocks.length;
+    $('c0').textContent = results.length; $('c1').textContent = g.blocks.length; $('c2').textContent = results.length;
     var n = results.length;
     $('barTitle').textContent = !n ? 'Henüz birim metraj yok' : g.blocks.length + ' iş kalemi · ' + complete + '/' + n + ' hazır';
     $('dl').disabled = !complete;
@@ -739,7 +758,7 @@ var MetrajCore = (function () {
     results.forEach(renderResults);
     renderGeneral(results);
   }
-  function fullRender() { renderTypes(); renderInsts(); refresh(); }
+  function fullRender() { renderTypes(); renderInsts(); renderUnits(); refresh(); }
 
   /* ---- olaylar ---- */
   function addItem(typeId, from) {
@@ -750,13 +769,12 @@ var MetrajCore = (function () {
     if (from) { var idx = state.items.map(function (i) { return i.id; }).indexOf(from); state.items.splice(idx + 1, 0, item); }
     else state.items.push(item);
     save(); fullRender();
-    var el = $('in_' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var el = $('in_' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return item;
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('button, .t[data-toggle]'); if (!b) return;
     if (b.dataset.add) { addItem(b.dataset.add); return; }
-    if (b.dataset.dup) { var it = state.items.filter(function (i) { return i.id === b.dataset.dup; })[0]; if (it) addItem(it.typeId, it.id); return; }
     if (b.dataset.toggle) {
       var item = state.items.filter(function (i) { return i.id === b.dataset.toggle; })[0]; item.open = !item.open; save();
       var body = b.closest('.inst').querySelector('.body'); body.classList.toggle('hidden', !item.open);
@@ -777,13 +795,17 @@ var MetrajCore = (function () {
     item.raw[el.dataset.cell] = el.value; save(); refresh();
   }
   document.addEventListener('input', onField); document.addEventListener('change', onField);
+  var wide = window.matchMedia('(min-width: 900px)');
+  var curTab = wide.matches ? 1 : 0;
   function showTab(n) {
-    $('p1').hidden = n !== 1; $('p2').hidden = n !== 2;
-    $('tab1').classList.toggle('on', n === 1); $('tab2').classList.toggle('on', n === 2);
+    if (wide.matches && n === 0) n = 1;
+    curTab = n;
+    [0, 1, 2].forEach(function (i) { $('p' + i).hidden = i !== n; $('tab' + i).classList.toggle('on', i === n); });
     window.scrollTo({ top: 0 });
   }
-  $('tab1').addEventListener('click', function () { showTab(1); });
-  $('tab2').addEventListener('click', function () { showTab(2); });
+  [0, 1, 2].forEach(function (i) { $('tab' + i).addEventListener('click', function () { showTab(i); }); });
+  wide.addEventListener('change', function () { showTab(curTab); });
+  $('addSel').addEventListener('change', function () { var v = this.value; this.value = ''; if (v) addItem(v); });
   $('job').addEventListener('input', function () { state.job = this.value; save(); });
 
   /* ---- indirme ---- */
@@ -812,7 +834,7 @@ var MetrajCore = (function () {
   });
 
   /* ---- başlangıç ---- */
-  load(); $('job').value = state.job; fullRender();
+  load(); $('job').value = state.job; fullRender(); showTab(curTab);
   window.__metraj = { state: state, addItem: addItem, refresh: refresh, last: last };
 })();
 </script>
